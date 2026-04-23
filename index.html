@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculateur BUT2 Complet - Année</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 20px;
+        }
+
+        h1 { margin: 0; color: #4CAF50; margin-bottom: 15px; }
+
+        .nav-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .nav-btn {
+            background-color: #1e1e1e;
+            border: 1px solid #333;
+            color: #aaa;
+            padding: 10px 30px;
+            cursor: pointer;
+            font-size: 1.1em;
+            border-radius: 5px;
+            transition: 0.3s;
+        }
+
+        .nav-btn:hover { background-color: #2c2c2c; }
+        
+        .nav-btn.active {
+            background-color: #4CAF50;
+            color: white;
+            border-color: #4CAF50;
+        }
+
+        .page-section { display: none; }
+        .page-section.active { display: block; animation: fadeIn 0.3s; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .ue-card {
+            background-color: #1e1e1e;
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid #333;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .ue-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        .ue-title { font-size: 1.2em; font-weight: bold; color: #4CAF50; }
+        .ue-avg { font-size: 1.2em; font-weight: bold; }
+
+        .subject-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+        }
+
+        .subject-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sub-name { font-weight: 500; }
+        .sub-coeff { font-size: 0.8em; color: #888; }
+
+        input[type="number"] {
+            width: 60px;
+            padding: 5px;
+            border-radius: 4px;
+            border: 1px solid #444;
+            background-color: #2c2c2c;
+            color: white;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .valid { color: #4CAF50; }
+        .warning { color: #FF9800; }
+        .danger { color: #F44336; }
+
+        .toolbar {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #333;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            border: 1px solid transparent;
+            transition: 0.3s;
+        }
+
+        .btn-export { background: #4CAF50; color: white; }
+        .btn-import { background: #2196F3; color: white; }
+        .btn-reset { background: transparent; border-color: #f44336; color: #f44336; }
+        .btn:hover { opacity: 0.8; }
+        #file-input { display: none; }
+
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #1e1e1e;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .summary-table th, .summary-table td {
+            padding: 15px;
+            text-align: center;
+            border-bottom: 1px solid #333;
+        }
+
+        .summary-table th { background-color: #2c2c2c; color: #4CAF50; }
+        .row-total { font-weight: bold; background-color: #252525; }
+        .score-display { font-size: 1.2em; font-weight: bold; margin-bottom: 20px; text-align: center; }
+
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+        <header>
+            <h1>Suivi Année BUT 2 Info</h1>
+            <div class="nav-tabs">
+                <button class="nav-btn active" onclick="switchPage('s3')">Semestre 3</button>
+                <button class="nav-btn" onclick="switchPage('s4')">Semestre 4</button>
+                <button class="nav-btn" onclick="switchPage('final')">Moyenne Finale</button>
+            </div>
+        </header>
+
+        <div id="page-s3" class="page-section active">
+            <div class="score-display">Moyenne S3 : <span id="global-avg-s3">--</span></div>
+            <div id="dashboard-s3" class="dashboard-grid"></div>
+        </div>
+
+        <div id="page-s4" class="page-section">
+            <div class="score-display">Moyenne S4 : <span id="global-avg-s4">--</span></div>
+            <div id="dashboard-s4" class="dashboard-grid"></div>
+        </div>
+
+        <div id="page-final" class="page-section">
+            <div class="score-display">Moyenne Annuelle : <span id="global-avg-year">--</span></div>
+            <div class="ue-card" style="max-width: 800px; margin: 0 auto;">
+                <table class="summary-table">
+                    <thead>
+                        <tr>
+                            <th>Unité d'Enseignement</th>
+                            <th>Moyenne S3</th>
+                            <th>Moyenne S4</th>
+                            <th>Moyenne An</th>
+                        </tr>
+                    </thead>
+                    <tbody id="summary-body">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="toolbar">
+            <button class="btn btn-export" onclick="exportData()">💾 Exporter tout</button>
+            <button class="btn btn-import" onclick="document.getElementById('file-input').click()">📂 Importer</button>
+            <button class="btn btn-reset" onclick="clearData()">🗑️ Tout effacer</button>
+            <input type="file" id="file-input" accept=".json" onchange="importData(event)">
+        </div>
+    </div>
+
+    <script>
+        const structureS3 = {
+            "UE 1": [
+                { name: "SAÉ S3", coeff: 40 }, { name: "Développement Web", coeff: 15 },
+                { name: "Dév. Efficace", coeff: 10 }, { name: "Analyse", coeff: 12 },
+                { name: "Qualité Développement", coeff: 15 }, { name: "Droit", coeff: 8 }
+            ],
+            "UE 2": [
+                { name: "SAÉ S3", coeff: 40 }, { name: "Développement Web", coeff: 5 },
+                { name: "Dév. Efficace", coeff: 15 }, { name: "Analyse", coeff: 5 },
+                { name: "Archi Réseaux", coeff: 5 }, { name: "Probabilités", coeff: 17 },
+                { name: "Cryptographie", coeff: 8 }, { name: "Anglais", coeff: 5 }
+            ],
+            "UE 3": [
+                { name: "SAÉ S3", coeff: 40 }, { name: "Développement Web", coeff: 5 },
+                { name: "Prog. Système", coeff: 22 }, { name: "Archi Réseaux", coeff: 16 },
+                { name: "Cryptographie", coeff: 12 }, { name: "Anglais", coeff: 5 }
+            ],
+            "UE 4": [
+                { name: "SAÉ S3", coeff: 40 }, { name: "Développement Web", coeff: 10 },
+                { name: "SQL Programmation", coeff: 25 }, { name: "Probabilités", coeff: 5 },
+                { name: "Cryptographie", coeff: 5 }, { name: "Management", coeff: 10 },
+                { name: "Droit", coeff: 5 }
+            ],
+            "UE 5": [
+                { name: "SAÉ S3", coeff: 40 }, { name: "Analyse", coeff: 6 },
+                { name: "Qualité Développement", coeff: 12 }, { name: "Management", coeff: 18 },
+                { name: "Droit", coeff: 10 }, { name: "Anglais", coeff: 7 }, { name: "COM", coeff: 7 }
+            ],
+            "UE 6": [
+                { name: "SAÉ S3", coeff: 40 }, { name: "Qualité Développement", coeff: 5 },
+                { name: "Management", coeff: 16 }, { name: "Anglais", coeff: 8 },
+                { name: "COM", coeff: 16 }, { name: "PPP", coeff: 15 }
+            ]
+        };
+
+        const structureS4 = {
+            "UE 1": [
+                { name: "Stage", coeff: 30 }, { name: "SAÉ S4", coeff: 15 },
+                { name: "Portfolio", coeff: 5 }, { name: "Architecture Logicielle", coeff: 20 },
+                { name: "Qualité Développement", coeff: 10 }, { name: "Complément Web", coeff: 10 },
+                { name: "Développement Applis Mobiles", coeff: 10 }
+            ],
+            "UE 2": [
+                { name: "Stage", coeff: 30 }, { name: "SAÉ S4", coeff: 15 },
+                { name: "Portfolio", coeff: 5 }, { name: "Méthodes Optimisation", coeff: 14 },
+                { name: "Anglais", coeff: 5 }, { name: "Management", coeff: 5 },
+                { name: "Complément Web", coeff: 6 }, { name: "Développement Applis Mobiles", coeff: 6 },
+                { name: "Automates Langages", coeff: 14 }
+            ],
+            "UE 3": [
+                { name: "Stage", coeff: 30 }, { name: "SAÉ S4", coeff: 15 },
+                { name: "Portfolio", coeff: 5 }, { name: "Architecture Logicielle", coeff: 16 },
+                { name: "Virtualisation", coeff: 34 }
+            ],
+            "UE 4": [
+                { name: "Stage", coeff: 30 }, { name: "SAÉ S4", coeff: 15 },
+                { name: "Portfolio", coeff: 5 }, { name: "Qualité Au Delà du Relationnel", coeff: 23 },
+                { name: "COM Interne", coeff: 7 }, { name: "Complément Web", coeff: 10 },
+                { name: "Développement Applis Mobiles", coeff: 10 }
+            ],
+            "UE 5": [
+                { name: "Stage", coeff: 30 }, { name: "SAÉ S4", coeff: 15 },
+                { name: "Portfolio", coeff: 5 }, { name: "Qualité Développement", coeff: 13 },
+                { name: "Management", coeff: 27 }, { name: "Complément Web", coeff: 5 },
+                { name: "Développement Applis Mobiles", coeff: 5 }
+            ],
+            "UE 6": [
+                { name: "Stage", coeff: 30 }, { name: "SAÉ S4", coeff: 15 },
+                { name: "Portfolio", coeff: 5 }, { name: "Architecture Logicielle", coeff: 5 },
+                { name: "Anglais", coeff: 16 }, { name: "COM Interne", coeff: 16 },
+                { name: "PPP", coeff: 13 }
+            ]
+        };
+
+        const results = {
+            s3: {},
+            s4: {}
+        };
+
+        function switchPage(pageId) {
+            document.querySelectorAll('.page-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById('page-' + pageId).classList.add('active');
+            
+            const btnIndex = pageId === 's3' ? 0 : (pageId === 's4' ? 1 : 2);
+            document.querySelectorAll('.nav-btn')[btnIndex].classList.add('active');
+
+            if(pageId === 'final') updateSummaryTable();
+        }
+
+        function createDashboard(containerId, structure, prefix) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+
+            for (const [ueName, subjects] of Object.entries(structure)) {
+                const card = document.createElement('div');
+                card.className = 'ue-card';
+                
+                let subjectsHtml = '';
+                subjects.forEach((sub, index) => {
+                    const inputId = `${prefix}-${ueName.replace(' ', '')}-${index}`;
+                    subjectsHtml += `
+                        <div class="subject-row">
+                            <div class="subject-info">
+                                <span class="sub-name">${sub.name}</span>
+                                <span class="sub-coeff">Coeff: ${sub.coeff}</span>
+                            </div>
+                            <input type="number" id="${inputId}" min="0" max="20" step="0.5" placeholder="-" 
+                                   oninput="saveAndCalc('${prefix}')">
+                        </div>
+                    `;
+                });
+
+                card.innerHTML = `
+                    <div class="ue-header">
+                        <span class="ue-title">${ueName}</span>
+                        <span class="ue-avg" id="avg-${prefix}-${ueName.replace(' ', '')}">--</span>
+                    </div>
+                    <div>${subjectsHtml}</div>
+                `;
+                container.appendChild(card);
+            }
+        }
+
+        function saveAndCalc(semester) {
+            const structure = semester === 's3' ? structureS3 : structureS4;
+            const grades = {};
+            let totalSum = 0;
+            let totalCount = 0;
+            const ueAverages = {};
+
+            for (const [ueName, subjects] of Object.entries(structure)) {
+                let ueSum = 0;
+                let ueCoeffSum = 0;
+                let hasGrades = false;
+
+                subjects.forEach((sub, index) => {
+                    const inputId = `${semester}-${ueName.replace(' ', '')}-${index}`;
+                    const input = document.getElementById(inputId);
+                    const val = input.value;
+                    
+                    if (val !== '') {
+                        grades[inputId] = val;
+                        ueSum += parseFloat(val) * sub.coeff;
+                        ueCoeffSum += sub.coeff;
+                        hasGrades = true;
+                    }
+                });
+
+                const avgId = `avg-${semester}-${ueName.replace(' ', '')}`;
+                const avgDisplay = document.getElementById(avgId);
+                
+                if (hasGrades && ueCoeffSum > 0) {
+                    const avg = ueSum / ueCoeffSum;
+                    ueAverages[ueName] = avg;
+                    avgDisplay.textContent = avg.toFixed(2);
+                    avgDisplay.className = 'ue-avg ' + (avg >= 10 ? 'valid' : (avg >= 8 ? 'warning' : 'danger'));
+                    totalSum += avg;
+                    totalCount++;
+                } else {
+                    avgDisplay.textContent = '--';
+                    avgDisplay.className = 'ue-avg';
+                }
+            }
+
+            if (totalCount > 0) {
+                const global = totalSum / totalCount;
+                results[semester].global = global;
+                results[semester].ues = ueAverages;
+                const globalDisplay = document.getElementById(`global-avg-${semester}`);
+                globalDisplay.textContent = global.toFixed(2);
+                globalDisplay.style.color = global >= 10 ? '#4CAF50' : '#F44336';
+            } else {
+                results[semester] = {};
+            }
+
+            localStorage.setItem('but2_full_year', JSON.stringify(getAllInputs()));
+        }
+
+        function getAllInputs() {
+            const allData = {};
+            document.querySelectorAll('input[type="number"]').forEach(input => {
+                if (input.value !== '') allData[input.id] = input.value;
+            });
+            return allData;
+        }
+
+        function updateSummaryTable() {
+            const tbody = document.getElementById('summary-body');
+            tbody.innerHTML = '';
+            let s3Sum = 0, s4Sum = 0, yearSum = 0;
+            let count = 0;
+
+            const ues = Object.keys(structureS3);
+            
+            ues.forEach(ue => {
+                const s3Avg = results.s3.ues && results.s3.ues[ue];
+                const s4Avg = results.s4.ues && results.s4.ues[ue];
+                
+                let yearAvg = null;
+                if (s3Avg !== undefined && s4Avg !== undefined) {
+                    yearAvg = (s3Avg + s4Avg) / 2;
+                } else if (s3Avg !== undefined) {
+                    yearAvg = s3Avg; 
+                } else if (s4Avg !== undefined) {
+                    yearAvg = s4Avg;
+                }
+
+                const row = `
+                    <tr>
+                        <td>${ue}</td>
+                        <td class="${getColorClass(s3Avg)}">${formatNum(s3Avg)}</td>
+                        <td class="${getColorClass(s4Avg)}">${formatNum(s4Avg)}</td>
+                        <td class="${getColorClass(yearAvg)}" style="font-weight:bold">${formatNum(yearAvg)}</td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+
+                if (s3Avg) s3Sum += s3Avg;
+                if (s4Avg) s4Sum += s4Avg;
+                if (yearAvg) yearSum += yearAvg;
+                if (s3Avg || s4Avg) count++;
+            });
+
+            const globalS3 = results.s3.global;
+            const globalS4 = results.s4.global;
+            let globalYear = null;
+
+            if (globalS3 && globalS4) globalYear = (globalS3 + globalS4) / 2;
+            else if (globalS3) globalYear = globalS3;
+            else if (globalS4) globalYear = globalS4;
+
+            const totalRow = `
+                <tr class="row-total">
+                    <td>MOYENNE GÉNÉRALE</td>
+                    <td class="${getColorClass(globalS3)}">${formatNum(globalS3)}</td>
+                    <td class="${getColorClass(globalS4)}">${formatNum(globalS4)}</td>
+                    <td class="${getColorClass(globalYear)}">${formatNum(globalYear)}</td>
+                </tr>
+            `;
+            tbody.innerHTML += totalRow;
+            document.getElementById('global-avg-year').textContent = formatNum(globalYear);
+            document.getElementById('global-avg-year').style.color = globalYear >= 10 ? '#4CAF50' : '#F44336';
+        }
+
+        function formatNum(n) { return n ? n.toFixed(2) : '--'; }
+        
+        function getColorClass(n) {
+            if (n === null || n === undefined) return '';
+            if (n >= 10) return 'valid';
+            if (n >= 8) return 'warning';
+            return 'danger';
+        }
+
+        function exportData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(getAllInputs()));
+            const node = document.createElement('a');
+            node.setAttribute("href", dataStr);
+            node.setAttribute("download", "notes_but2_complet.json");
+            document.body.appendChild(node);
+            node.click();
+            node.remove();
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    applyData(data);
+                    alert("Import réussi !");
+                } catch(err) { alert("Erreur fichier"); }
+            };
+            reader.readAsText(file);
+        }
+
+        function applyData(data) {
+            for (const [id, val] of Object.entries(data)) {
+                const el = document.getElementById(id);
+                if (el) el.value = val;
+            }
+            saveAndCalc('s3');
+            saveAndCalc('s4');
+        }
+
+        function clearData() {
+            if(confirm('Tout supprimer ?')) {
+                localStorage.removeItem('but2_full_year');
+                document.querySelectorAll('input').forEach(i => i.value = '');
+                saveAndCalc('s3');
+                saveAndCalc('s4');
+            }
+        }
+
+        function init() {
+            createDashboard('dashboard-s3', structureS3, 's3');
+            createDashboard('dashboard-s4', structureS4, 's4');
+            
+            const saved = localStorage.getItem('but2_full_year');
+            if (saved) applyData(JSON.parse(saved));
+            
+            saveAndCalc('s3');
+            saveAndCalc('s4');
+        }
+
+        init();
+    </script>
+</body>
+</html>
